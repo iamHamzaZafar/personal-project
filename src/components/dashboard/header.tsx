@@ -4,9 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Search, Bell, Mail, Sun, Moon, User } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { useSidebar } from "@/contexts/sidebar-context";
+import { cn } from "@/lib/utils";
 
 export function Header() {
   const { theme, setTheme } = useTheme();
+  const { isCollapsed } = useSidebar();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -14,7 +17,12 @@ export function Header() {
   }, []);
 
   return (
-    <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6 fixed top-0 right-0 left-64 z-40">
+    <header
+      className={cn(
+        "h-16 bg-card border-b border-border flex items-center justify-between px-6 fixed top-0 z-40 transition-all duration-300",
+        isCollapsed ? "left-20 right-0" : "left-64 right-0"
+      )}
+    >
       {/* Search Bar */}
       <div className="flex-1 max-w-md">
         <div className="relative">

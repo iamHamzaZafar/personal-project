@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useSidebar } from "@/contexts/sidebar-context";
 import {
   LayoutDashboard,
   User,
@@ -33,6 +34,8 @@ import {
   Search,
   MoreVertical,
   ChevronRight,
+  ChevronLeft,
+  Menu,
 } from "lucide-react";
 
 const menuItems = [
@@ -203,6 +206,7 @@ const menuItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { isCollapsed, toggleSidebar } = useSidebar();
   const [expandedItems, setExpandedItems] = React.useState<string[]>([]);
 
   const toggleExpanded = (label: string) => {
@@ -212,31 +216,56 @@ export function Sidebar() {
   };
 
   return (
-    <div className="w-64 bg-card border-r border-border h-screen flex flex-col fixed left-0 top-0 overflow-y-auto z-50">
+    <div
+      className={cn(
+        "bg-card border-r border-border h-screen flex flex-col fixed left-0 top-0 overflow-y-auto z-50 transition-all duration-300",
+        isCollapsed ? "w-20" : "w-64"
+      )}
+    >
       {/* Logo Section */}
       <div className="p-4 border-b border-border flex items-center justify-between">
-        <h1 className="text-xl font-bold text-foreground">OrbitNest</h1>
-        <button className="p-1 hover:bg-accent rounded">
-          <MoreVertical className="h-4 w-4 text-muted-foreground" />
-        </button>
-      </div>
-
-      {/* Search */}
-      <div className="p-4 border-b border-border">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search..."
-            className="w-full pl-10 pr-4 py-2 border border-input bg-background text-foreground rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary placeholder:text-muted-foreground"
-          />
+        {!isCollapsed && (
+          <h1 className="text-xl font-bold text-foreground">OrbitNest</h1>
+        )}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggleSidebar}
+            className="p-1.5 hover:bg-accent rounded transition-colors"
+            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {isCollapsed ? (
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+            )}
+          </button>
+          {!isCollapsed && (
+            <button className="p-1 hover:bg-accent rounded">
+              <MoreVertical className="h-4 w-4 text-muted-foreground" />
+            </button>
+          )}
         </div>
       </div>
 
+      {/* Search */}
+      {!isCollapsed && (
+        <div className="p-4 border-b border-border">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search..."
+              className="w-full pl-10 pr-4 py-2 border border-input bg-background text-foreground rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary placeholder:text-muted-foreground"
+            />
+          </div>
+        </div>
+      )}
+
       {/* Menu Items */}
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className={cn("flex-1 space-y-1", isCollapsed ? "p-2" : "p-4")}>
         {menuItems.map((item, index) => {
           if (item.type === "section") {
+            if (isCollapsed) return null;
             return (
               <div key={index} className="pt-4 pb-2">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3">
@@ -256,43 +285,64 @@ export function Sidebar() {
               <Link
                 href={item.href || "#"}
                 onClick={(e) => {
-                  if (hasChildren) {
+                  if (hasChildren && !isCollapsed) {
                     e.preventDefault();
                     toggleExpanded(item.label);
                   }
                 }}
                 className={cn(
-                  "flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                  "flex items-center rounded-lg text-sm font-medium transition-colors group relative",
+                  isCollapsed
+                    ? "justify-center px-2 py-2.5"
+                    : "justify-between px-3 py-2.5",
                   isActive
                     ? "bg-primary text-primary-foreground"
                     : "text-foreground hover:bg-accent"
                 )}
+                title={isCollapsed ? item.label : undefined}
               >
-                <div className="flex items-center gap-3">
-                  <Icon className="h-5 w-5" />
-                  <span>{item.label}</span>
-                  {item.badge && (
-                    <span className={cn(
-                      "ml-2 px-2 py-0.5 text-xs rounded",
-                      isActive 
-                        ? "bg-primary-foreground/20 text-primary-foreground"
-                        : "bg-primary/20 text-primary"
-                    )}>
-                      {item.badge}
-                    </span>
+                <div className={cn("flex items-center", isCollapsed ? "justify-center" : "gap-3")}>
+                  <Icon className="h-5 w-5 flex-shrink-0" />
+                  {!isCollapsed && (
+                    <>
+                      <span>{item.label}</span>
+                      {item.badge && (
+                        <span
+                          className={cn(
+                            "ml-2 px-2 py-0.5 text-xs rounded",
+                            isActive
+                              ? "bg-primary-foreground/20 text-primary-foreground"
+                              : "bg-primary/20 text-primary"
+                          )}
+                        >
+                          {item.badge}
+                        </span>
+                      )}
+                    </>
                   )}
                 </div>
-                {hasChildren && (
+                {hasChildren && !isCollapsed && (
                   <ChevronRight
                     className={cn(
-                      "h-4 w-4 transition-transform",
+                      "h-4 w-4 transition-transform flex-shrink-0",
                       isExpanded && "transform rotate-90",
                       isActive ? "text-primary-foreground" : "text-muted-foreground"
                     )}
                   />
                 )}
+                {/* Tooltip for collapsed state */}
+                {isCollapsed && (
+                  <div className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+                    {item.label}
+                    {item.badge && (
+                      <span className="ml-1 px-1 py-0.5 text-xs bg-primary/20 text-primary rounded">
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
+                )}
               </Link>
-              {hasChildren && isExpanded && (
+              {hasChildren && isExpanded && !isCollapsed && (
                 <div className="ml-8 mt-1 space-y-1">
                   {item.children?.map((child) => (
                     <Link
