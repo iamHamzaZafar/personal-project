@@ -22,6 +22,9 @@ export default function Home() {
               <Link href={"/"} className="text-gray-900 hover:text-purple-600 transition-colors">
                 Next.js Supabase Starter
               </Link>
+              <Link href={"/dashboard"} className="text-gray-900 hover:text-purple-600 transition-colors">
+                Dashboard
+              </Link>
               <div className="flex items-center gap-2">
                 <DeployButton />
               </div>
